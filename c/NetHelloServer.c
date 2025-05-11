@@ -1,4 +1,9 @@
 
+/*"Everything is a file" in Unix or for us UnixLib.
+A network connection effectively establishes a "file" which receives the input and
+our server checks for activity in this "file" and responds accordingly.
+Further, the activity of the server (receiving connections for example) itself is kept in a "file"*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -28,7 +33,7 @@ int main(int argc, char *argv[])
 
     /*Setting up to listen on the port*/
 
-    /* Create socket */
+    /* Create socket - that is, create a file descriptor for the server "listen_sock", connections can be found as activity in this file */
     listen_sock = socket(AF_INET, SOCK_STREAM, 0);
     if (listen_sock < 0)
     {
@@ -41,13 +46,13 @@ int main(int argc, char *argv[])
     server_addr.sin_addr.s_addr = INADDR_ANY; // Listen on all interfaces
     server_addr.sin_port = htons(PORT);       // Port number
 
-    /* Bind socket to port */
+    /* Bind socket to port - register the details of the server with the file descriptor listen_sock, activity on this port should go to this file descriptor */
     if (bind(listen_sock, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0)
     {
         report_error("bind");
     }
 
-    /* Start listening, five connections max */
+    /* Listen for connections - that is, check for activity in the file descriptor "listen_sock" */
     if (listen(listen_sock, 5) < 0)
     {
         report_error("listen");
@@ -71,7 +76,9 @@ int main(int argc, char *argv[])
 
         /* Accept incoming connection */
         client_len = sizeof(client_addr);
-        client_sock = accept(listen_sock, (struct sockaddr *)&client_addr, &client_len); // Accept a connection, fill in client_addr
+        /* Accept a connection - when a new connection is added to the server file descriptor, "listen_sock"
+        fill the client address details into a sockaddr struct* and associate this with a client file descriptor, "client_sock" */
+        client_sock = accept(listen_sock, (struct sockaddr *)&client_addr, &client_len);
 
         /* If accept() fails, it returns -1 and sets errno */
         if (client_sock < 0)
@@ -87,6 +94,7 @@ int main(int argc, char *argv[])
 
         /* Send greeting */
         strcpy(buffer, "Hello World from RISC OS!\r\n");
+        /* Copies the bytes in the buffer into client_sock which is the file that represents the client, returns the number of bytes sent */
         bytes_sent = send(client_sock, buffer, strlen(buffer), 0);
         if (bytes_sent < 0)
         {
@@ -98,7 +106,8 @@ int main(int argc, char *argv[])
         }
 
         /* Wait for a message from the client */
-        // Receive data from Client
+        /* Receive data from Client */
+        /*  Copy the bytes recieved in client_sock, the file representing the client into buffer, returns the number of bytes received */
         bytes_received = recv(client_sock, buffer, sizeof(buffer), 0);
         if (bytes_received > 0)
         {
@@ -120,6 +129,7 @@ int main(int argc, char *argv[])
 
     /* Clean up */
     printf("Server shutting down...\n");
+    /* Close the files representing the server and client, these are the files referred to by the file descriptors client_sock and listen_sock*/
     close(client_sock);
     close(listen_sock);
     printf("Server shutdown\n");
@@ -135,8 +145,8 @@ void report_error(const char *context)
     exit(1);
 }
 
-// format the IP address to a string
-// This is a missing POSIX function (inet_ntop/inet_ntoa)
+/* format the IP address to a string */
+/* This is a missing POSIX function (inet_ntop/inet_ntoa) */
 void format_ip_as_str(uint32_t ip, char *buf, size_t len)
 {
     unsigned char *bytes = (unsigned char *)&ip;
