@@ -16,7 +16,7 @@ Further, the activity of the server (receiving connections for example) itself i
 #define PORT 12345
 #define BUFFER_SIZE 256
 
-// Function prototypes
+/* Function prototypes */
 void report_error(const char *context);
 void format_ip_as_str(uint32_t ip, char *buf, size_t len); // Reformats IP address to a string, this is a missing POSIX function (inet_ntop/inet_ntoa)
 
@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
 
     printf("RISC OS TCP Hello World Server\n");
 
-    /*Setting up to listen on the port*/
+    /* Setting up to listen on the port */
 
     /* Create socket - that is, create a file descriptor for the server "listen_sock", connections can be found as activity in this file */
     listen_sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -63,8 +63,8 @@ int main(int argc, char *argv[])
 
     /* Main loop */
     /* Wait for incoming connections */
-    /* When a connection is accepted send a message and then disconnect*/
-    /* Keep the server running*/
+    /* When a connection is accepted send a message and then disconnect */
+    /* Keep the server running */
     while (1)
     {
         /* Check for Escape key */
@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
 
         /* Wait for a message from the client */
         /* Receive data from Client */
-        /*  Copy the bytes recieved in client_sock, the file representing the client into buffer, returns the number of bytes received */
+        /* Copy the bytes recieved in client_sock, the file representing the client into buffer, returns the number of bytes received */
         bytes_received = recv(client_sock, buffer, sizeof(buffer), 0);
         if (bytes_received > 0)
         {
@@ -129,7 +129,7 @@ int main(int argc, char *argv[])
 
     /* Clean up */
     printf("Server shutting down...\n");
-    /* Close the files representing the server and client, these are the files referred to by the file descriptors client_sock and listen_sock*/
+    /* Close the files representing the server and client, these are the files referred to by the file descriptors client_sock and listen_sock */
     close(client_sock);
     close(listen_sock);
     printf("Server shutdown\n");
@@ -137,7 +137,7 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-/*Error reporting function*/
+/* Error reporting function */
 void report_error(const char *context)
 {
     _kernel_oserror *error = _kernel_last_oserror();
