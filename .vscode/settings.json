@@ -1,0 +1,5 @@
+{
+    "files.associations": {
+        "socket_utils_wrapper.h": "c"
+    }
+}
