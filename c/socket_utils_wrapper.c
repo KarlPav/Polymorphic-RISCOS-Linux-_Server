@@ -1,7 +1,7 @@
 
+#include <unistd.h>
+
 #include "socket_utils_wrapper.h"
-#include <stdio.h>
-#include <sys/select.h>
 
 // Include the correct platform header
 #ifdef __riscos__
@@ -20,12 +20,32 @@ void poly_inet_ntop(int i, uint32_t *ip, char *buf, size_t len) // Convert IP ad
 #endif
 }
 
-int poly_FD_ISSET(int i, fd_set *fds) // Function to check for key press in non-blocking mode
+// Single implementation that delegates to platform-specific function
+int poly_FD_ISSET(const int file_no, const fd_set *fds)
 {
 #ifdef __riscos__
-    return poly_FD_ISSET_riscos(i, fds);
+
+    if (file_no == STDIN_FILENO) // Special case for STDIN_FILENO
+    {
+        return poly_FD_ISSET_riscos(file_no, fds);
+    }
+    else
+    {
+        return FD_ISSET(file_no, fds); // Use standard FD_ISSET for other file descriptors}
+    }
+
 #else
-    return poly_FD_ISSET_posix(i, fds);
+    return poly_FD_ISSET_posix(file_no, fds);
+#endif
+}
+
+// Single implementation that delegates to platform-specific function
+int poly_read(const int file_no, char *buffer, const int buffer_size)
+{
+#ifdef __riscos__
+    return poly_read_riscos(file_no, buffer, buffer_size);
+#else
+    return poly_read_posix(file_no, buffer, buffer_size);
 #endif
 }
 

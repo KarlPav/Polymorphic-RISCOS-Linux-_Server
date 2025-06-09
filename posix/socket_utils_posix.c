@@ -10,26 +10,15 @@ void poly_inet_ntop_posix(int i, uint32_t *ip, char *buf, size_t len) // Convert
     inet_ntop(i, ip, buf, len); // - needs to be polymorphic
 }
 
-int poly_FD_ISSET_posix(int i, fd_set *fds)
+int poly_FD_ISSET_posix(const int file_no, const fd_set *fds)
 {
-    // Check if the file descriptor 'i' is set in the fd_set 'fd'
-    if (FD_ISSET(i, fds))
-    {
-        char cmd;
-        read(i, &cmd, 1);
-        if (cmd == '\\')
-        {
-            return 1; // If the '\\' key is pressed, return true
-        }
-        else
-        {
-            return 0; // Return false for any other key
-        }
-    }
-    else
-    {
-        return 0; // If the file descriptor is not set, return false
-    }
+    return (FD_ISSET(file_no, fds));
+}
+
+int poly_read_posix(const int file_no, char *buffer, const int buffer_size)
+{
+    int bytes_read = read(file_no, buffer, buffer_size - 1);
+    return bytes_read;
 }
 
 void poly_gen_func_posix()

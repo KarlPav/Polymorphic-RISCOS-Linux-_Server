@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "socket_utils_wrapper.h": "c"
+        "socket_utils_wrapper.h": "c",
+        "stdio.h": "c"
     }
 }

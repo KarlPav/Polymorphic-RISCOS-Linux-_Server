@@ -3,6 +3,7 @@
 #include <arpa/inet.h> // For htonl()
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <swis.h>   // For OS_Byte
 #include <kernel.h> // For _kernel_swi_regs and _kernel_swi
 
@@ -12,32 +13,54 @@ void poly_inet_ntop_riscos(int i, uint32_t *ip, char *buf, size_t len) // Conver
     snprintf(buf, len, "%d.%d.%d.%d", bytes[0], bytes[1], bytes[2], bytes[3]);
 }
 
-int poly_FD_ISSET_riscos(int i, fd_set *fds)
+int poly_FD_ISSET_riscos(const int file_no, const fd_set *fds)
 {
     _kernel_swi_regs regs;
+    int flag = 0;
+    int start_time, current_time;
 
-    /* OS_Byte 129: Check key press within time limit
-     * R1,R2 = Time limit ((R2 * 256) + R1) (centiseconds) */
-    regs.r[0] = 129;        // OS_Byte function number for key press check
-    regs.r[1] = 100 & 0xFF; // 1500 centiseconds = 15 seconds (mask the low bytes with 0xFF)
-    regs.r[2] = 100 >> 8;   // High byte of 1500 (shift the high bytes right by 8 bits, to where the low bytes were)
+    regs.r[0] = 152; // OS_Byte function number for buffer status
+    regs.r[1] = 0;   // R1 = 0 for keyboard buffer status
+    regs.r[2] = 0;   // R2 = 0
 
-    _kernel_swi(OS_Byte, &regs, &regs);
+    _kernel_swi_c(OS_Byte, &regs, &regs, &flag);
 
-    if (regs.r[1] == 92) // If no key is pressed, return -1
+    _kernel_swi(OS_ReadMonotonicTime, &regs, &regs);
+    start_time = regs.r[0];
+
+    // Wait until 100 centiseconds (1 second) pass
+    // Without this it causes read() to return too early
+    do
     {
-        return 1;
-    }
-    else if (regs.r[1] != 92 || regs.r[2] == 255) // If the time limit is reached without a key press, return -1
+        _kernel_swi(OS_ReadMonotonicTime, &regs, &regs);
+        current_time = regs.r[0];
+    } while (current_time - start_time < 10);
+
+    if (flag == 1) // Buffer empty, return 0
     {
         return 0;
     }
     else
     {
-        return 0;
+        return 1;
     };
-    // printf("regs.r[1] = %d\n", regs.r[1]); //this is the key press
-    // printf("regs.r[2] = %d\n", regs.r[2]); // this is 255 when timed out with no key press
+}
+
+int poly_read_riscos(const int file_no, char *buffer, const int buffer_size)
+{
+    _kernel_swi_regs regs;
+    int bytes_read;
+
+    regs.r[0] = (int)buffer; // Pointer to buffer
+    regs.r[1] = buffer_size; // Max length (including NULL terminator), returns the number of characters read on exit, excluding the NULL terminator
+    regs.r[2] = 0;           // Default (none)
+
+    _kernel_swi(OS_ReadLine, &regs, &regs); // Calls OS_ReadLine
+    bytes_read = regs.r[1] + 1;             // Get the number of characters read
+
+    buffer[regs.r[1]] = '\n'; // Ensure \n
+
+    return bytes_read; // Return the length of the input
 }
 
 void poly_gen_func_riscos()

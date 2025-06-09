@@ -20,7 +20,7 @@ ifeq ($(TARGET_OS),riscos)
     CC := $(GCCSDK_CROSS)/arm-unknown-riscos-gcc
     LD := $(CC)
     OUTPUT_BINARY := !RunImageELF
-    FINAL_BINARY := !RunImage
+    FINAL_BINARY := !RunImageServer
     CCFLAGS := -std=gnu99 -mlibscl -mhard-float -mthrowback -Wall -O2 \
                -fno-strict-aliasing -mpoke-function-name -D__riscos__
     LDFLAGS := -L$(GCCSDK_ROOT)/env/lib -lOSLibH32 -lSFLib32
